@@ -4,10 +4,16 @@ use App\Models\Chirp;
 use Illuminate\Database\Eloquent\Collection;
 use Livewire\Attributes\On;
 
+/*
+The choice of the backslash (\) as the namespace separator in PHP was largely arbitrary and based on the need for a character that wasn't already heavily used in PHP code. The backslash was one of the few characters that met this criteria. It's worth noting that this choice has been a point of some controversy in the PHP community, as the backslash is also used as an escape character in many contexts, which can lead to confusion.
+*/
+
 use Livewire\Volt\Component;
 
 new class extends Component {
     public Collection $chirps;
+
+    public ?Chirp $editing = null;
 
     public function mount(): void
     {
@@ -19,6 +25,41 @@ new class extends Component {
     {
         $this->chirps = Chirp::with('user')->latest()->get();
     }
+
+    public function edit(Chirp $chirp): void
+    {
+        $this->editing = $chirp;
+
+        $this->getChirps();
+    }
+
+    #[On('chirp-edit-canceled')]
+    #[On('chirp-updated')]
+    public function disableEditing(): void
+    {
+        $this->editing = null;
+
+        $this->getChirps();
+    }
+
+    /*
+
+        <!--
+        The __() function in Laravel is a helper function used for localization or internationalization. It's used to translate the given message based on your application's current locale or return the original message if no translation exists.
+
+        @{{ __('Edit') }} is used to display the word "Edit" in the user's preferred language, if a translation is available. If no translation is found, it will simply display "Edit".
+
+        This is useful for applications that need to support multiple languages, as it allows you to easily translate UI elements.
+        -->
+        <!--
+        The <livewire:chirps.edit :chirp="$chirp" :key="$chirp->id" /> line in your Blade file is including the chirps.edit Livewire component and passing two properties to it: chirp and key.
+
+        :chirp="$chirp" is passing the current $chirp object to the chirps.edit component. Inside the component, you can access this object with $this->chirp.
+        :key="$chirp->id" is setting a unique key for each instance of the component. This is useful when you have multiple instances of the same component on a page and you want to maintain their individual state.
+        The chirps.edit component should be defined in a file located at app/Http/Livewire/Chirps/Edit.php.
+        -->
+
+    */
 }; ?>
 
 <div class="mt-6 bg-white divide-y rounded-lg shadow-sm">
@@ -35,9 +76,37 @@ new class extends Component {
                         <span class="text-gray-800">{{ $chirp->user->name }}</span>
                         <small
                             class="ml-2 text-sm text-gray-600">{{ $chirp->created_at->format('j M Y, g:i a') }}</small>
+                        @unless ($chirp->created_at->eq($chirp->updated_at))
+                            <small class="text-sm text-gray-600"> &middot; {{ __('edited') }}</small>
+                        @endunless
+
                     </div>
+                    @if ($chirp->user->is(auth()->user()))
+                        <x-dropdown>
+                            <x-slot name="trigger">
+                                <button>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400"
+                                        viewBox="0 0 20 20" fill="currentColor">
+                                        <path
+                                            d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z" />
+                                    </svg>
+                                </button>
+                            </x-slot>
+                            <x-slot name="content">
+                                <x-dropdown-link wire:click="edit({{ $chirp->id }})">
+                                    {{ __('Edit') }}
+                                </x-dropdown-link>
+
+
+                            </x-slot>
+                        </x-dropdown>
+                    @endif
                 </div>
-                <p class="mt-4 text-lg text-gray-900">{{ $chirp->message }}</p>
+                @if ($chirp->is($editing))
+                    <livewire:chirps.edit :chirp="$chirp" :key="$chirp->id" />
+                @else
+                    <p class="mt-4 text-lg text-gray-900">{{ $chirp->message }}</p>
+                @endif
             </div>
         </div>
     @endforeach
