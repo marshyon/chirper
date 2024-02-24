@@ -12,7 +12,6 @@ use Livewire\Volt\Component;
 
 new class extends Component {
     public Collection $chirps;
-
     public ?Chirp $editing = null;
 
     public function mount(): void
@@ -42,22 +41,40 @@ new class extends Component {
         $this->getChirps();
     }
 
+    public function delete(Chirp $chirp): void
+    {
+        $this->authorize('delete', $chirp);
+
+        $chirp->delete();
+
+        $this->getChirps();
+    }
+
     /*
 
-        <!--
+        NOTES
+
         The __() function in Laravel is a helper function used for localization or internationalization. It's used to translate the given message based on your application's current locale or return the original message if no translation exists.
 
         @{{ __('Edit') }} is used to display the word "Edit" in the user's preferred language, if a translation is available. If no translation is found, it will simply display "Edit".
 
         This is useful for applications that need to support multiple languages, as it allows you to easily translate UI elements.
-        -->
-        <!--
+
         The <livewire:chirps.edit :chirp="$chirp" :key="$chirp->id" /> line in your Blade file is including the chirps.edit Livewire component and passing two properties to it: chirp and key.
 
         :chirp="$chirp" is passing the current $chirp object to the chirps.edit component. Inside the component, you can access this object with $this->chirp.
         :key="$chirp->id" is setting a unique key for each instance of the component. This is useful when you have multiple instances of the same component on a page and you want to maintain their individual state.
         The chirps.edit component should be defined in a file located at app/Http/Livewire/Chirps/Edit.php.
-        -->
+
+        The lines #[On('chirp-edit-canceled')] and #[On('chirp-updated')] are actually attributes in PHP 8 that are used for method annotations. They are not comments; rather, they are metadata annotations that provide additional information about the methods they precede.
+
+        In this specific code, these annotations are used with Livewire, a Laravel library for building reactive user interfaces. Livewire uses these annotations to identify which methods should be triggered in response to specific Livewire events.
+
+        For example:
+
+        #[On('chirp-edit-canceled')]: This indicates that the disableEditing method should be called when the Livewire component receives a "chirp-edit-canceled" event. It likely means that some Livewire component in the application emits this event when a chirp editing is canceled.
+
+        #[On('chirp-updated')]: This indicates that the disableEditing method should also be called when the Livewire component receives a "chirp-updated" event. It suggests that this method is intended to handle the event when a chirp is updated.
 
     */
 }; ?>
@@ -95,6 +112,10 @@ new class extends Component {
                             <x-slot name="content">
                                 <x-dropdown-link wire:click="edit({{ $chirp->id }})">
                                     {{ __('Edit') }}
+                                </x-dropdown-link>
+                                <x-dropdown-link wire:click="delete({{ $chirp->id }})"
+                                    wire:confirm="Are you sure to delete this chirp?">
+                                    {{ __('Delete') }}
                                 </x-dropdown-link>
 
 
