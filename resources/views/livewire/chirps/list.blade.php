@@ -14,6 +14,11 @@ new class extends Component {
     public Collection $chirps;
     public ?Chirp $editing = null;
 
+    public function hydrate()
+    {
+        $this->getChirps();
+    }
+
     public function mount(): void
     {
         $this->getChirps();
@@ -79,7 +84,7 @@ new class extends Component {
     */
 }; ?>
 
-<div class="mt-6 bg-white divide-y rounded-lg shadow-sm">
+<div wire:poll.5s class="mt-6 bg-white divide-y rounded-lg shadow-sm">
     @foreach ($chirps as $chirp)
         <div class="flex p-6 space-x-2" wire:key="{{ $chirp->id }}">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-gray-600 -scale-x-100" fill="none"
